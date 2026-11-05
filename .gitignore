@@ -24,4 +24,7 @@
 _ide_helper.php
 Homestead.json
 Homestead.yaml
+docker-compose.yml
+Dockerfile
+.dockerignore
 Thumbs.db
