@@ -79,6 +79,29 @@
                 @if (! $isAdminUser && $hasCustom)<button type="submit" form="resetForm" class="btn btn-outline" onclick="return confirm('Remove all custom rights and use role defaults?')">Reset to role defaults</button>@endif
             </div>
         </form>
+        {{-- admin password reset --}}
+        <div class="card mt-6 p-5">
+            <h3 class="flex items-center gap-2 text-lg font-bold">@include('partials.icon', ['name' => 'key', 'class' => 'h-5 w-5 text-violet-600']) Reset password</h3>
+            <p class="mt-1 text-sm text-slate-500">Set a new password for {{ $selected->name }}, or leave it empty to generate a random one. They are signed out everywhere.</p>
+
+            @if (session('temp_password'))
+                <div class="mt-4 rounded-2xl border-2 border-dashed border-emerald-300 bg-emerald-50 p-4">
+                    <div class="text-xs font-semibold uppercase tracking-wider text-emerald-700">New password - shown only once</div>
+                    <div class="mt-1 flex flex-wrap items-center gap-3">
+                        <code id="tempPw" class="rounded-lg bg-white px-3 py-2 text-lg font-bold tracking-wider text-emerald-900 shadow-sm">{{ session('temp_password') }}</code>
+                        <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('tempPw').textContent).then(() => this.textContent = 'Copied ✓')" class="btn btn-outline">Copy</button>
+                    </div>
+                    <p class="mt-2 text-xs text-emerald-800">Give it to the user securely. They will be asked to choose their own password at the next sign-in.</p>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('admin.access.password', $selected) }}" class="mt-4 grid gap-3 sm:grid-cols-3">@csrf
+                <div class="sm:col-span-2"><label class="block text-xs font-medium text-slate-600">New password <span class="text-slate-400">(min 8 - empty = generate)</span></label>
+                    <input type="text" name="password" autocomplete="off" minlength="8" placeholder="Leave empty to generate" class="w-full rounded-xl border border-violet-100 px-3 py-2 text-sm outline-none focus:border-violet-400"></div>
+                <label class="flex items-end gap-2 pb-2 text-sm"><input type="checkbox" name="force_change" value="1" checked class="h-4 w-4 accent-violet-700"> Require change at next login</label>
+                <button class="btn btn-primary sm:col-span-3 justify-center" onclick="return confirm('Reset the password for {{ addslashes($selected->name) }}? They will be signed out.')">Reset password</button>
+            </form>
+        </div>
         <form id="resetForm" method="POST" action="{{ route('admin.access.reset', $selected) }}" class="hidden">@csrf @method('DELETE')</form>
     @else
         <div class="card p-10 text-center text-slate-500">No users yet.</div>

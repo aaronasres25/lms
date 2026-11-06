@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Exceptions\LmsException;
+use App\Support\Notify;
 use App\Traits\LogsActivity;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -134,6 +135,10 @@ class Loan extends Model
             $this->recalculate();
 
             $this->logActivity("Book issued: {$book->name} to {$member->name}. Expected return: {$expected->toDateString()}. Issued by {$by->name}.");
+            if ($member->user) {
+                $home = $member->user->isStudent() ? route('student.library', [], false) : route('catalog', [], false);
+                Notify::send($member->user, 'Book issued', "\"{$book->name}\" is ready for you. Please return it by {$expected->toDateString()}.", $home, 'book', 'green', ['loan_id' => $this->id]);
+            }
         });
     }
 

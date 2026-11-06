@@ -61,10 +61,14 @@ class BookController extends Controller
         return redirect()->route('admin.books.show', $book)->with('success', "Book created with ISBN {$book->isbn}.");
     }
 
-    public function show(Book $book)
+    public function show(Request $request, Book $book)
     {
         $book->loadCount('issuedLoans')->load(['author', 'category', 'department', 'versionHistory.user', 'notifiedUsers',
-            'activities.user', 'loans' => fn ($q) => $q->with('member')->latest('id')->limit(10)]);
+            'activities.user', 'approvals.user', 'approvals.actor', 'loans' => fn ($q) => $q->with('member')->latest('id')->limit(10)]);
+
+        // opening the record marks its notifications as read
+        $request->user()->notifications()->whereNull('read_at')->get()
+            ->filter(fn ($n) => (int) ($n->data['book_id'] ?? 0) === $book->id)->each->markAsRead();
 
         return view('admin.books.show', ['book' => $book, 'departments' => Department::options()]);
     }
@@ -112,8 +116,16 @@ class BookController extends Controller
 
     public function approve(Request $request, Book $book)
     {
-        $book->approve($request->user());
-        return back()->with('success', 'Document approved.');
+        $data = $request->validate(['comment' => ['nullable', 'string', 'max:2000']]);
+        $book->approve($request->user(), $data['comment'] ?? null);
+        return back()->with('success', $book->fresh()->state === 'approved' ? 'Final approval given - the document is Approved.' : 'Your approval was recorded. The next approver has been notified.');
+    }
+
+    public function reject(Request $request, Book $book)
+    {
+        $data = $request->validate(['comment' => ['required', 'string', 'max:2000']]);
+        $book->reject($request->user(), $data['comment']);
+        return back()->with('success', 'Document rejected and sent back to Draft.');
     }
 
     public function release(Request $request, Book $book)

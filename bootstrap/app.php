@@ -3,6 +3,8 @@
 use App\Exceptions\LmsException;
 use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\EnsurePasswordChanged;
+use App\Http\Middleware\PortalRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,7 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->alias(['role' => CheckRole::class, 'perm' => CheckPermission::class]);
+        $middleware->alias(['role' => CheckRole::class, 'perm' => CheckPermission::class, 'portal' => PortalRole::class]);
+        // Render terminates TLS in front of the container - trust its X-Forwarded-* headers
+        $middleware->trustProxies(at: '*');
+        $middleware->appendToGroup('web', EnsurePasswordChanged::class);
         $middleware->redirectGuestsTo(fn () => route('login'));
     })
     ->withExceptions(function (Exceptions $exceptions) {

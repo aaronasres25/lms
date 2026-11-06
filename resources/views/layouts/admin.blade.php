@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Library') · {{ config('lms.company_name') }} LMS</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%235b21b6'/%3E%3Cpath d='M12 7v10m0-10C10.8 6.3 9.3 6 8 6S5.2 6.3 5 7v10c.2-.7 1.7-1 3-1s2.8.3 4 1m0-10c1.2-.7 2.7-1 4-1s2.8.3 3 1v10c-.2-.7-1.7-1-3-1s-2.8.3-4 1' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -39,42 +40,58 @@
     $u = auth()->user();
     // [label, route, active-pattern, icon, resource (null = always, '__admin' = admins only)]
     $sections = [
-        'Overview' => [['Dashboard', 'admin.dashboard', 'admin.dashboard', 'home', null]],
+        'Overview' => [
+            ['Dashboard', 'admin.dashboard', 'admin.dashboard', 'home', null],
+            ['Notifications', 'admin.notifications.index', 'admin.notifications.*', 'bell', null],
+        ],
         'Library' => [
             ['Books', 'admin.books.index', 'admin.books.*', 'book', 'books'],
             ['Loans', 'admin.loans.index', 'admin.loans.*', 'loan', 'loans'],
             ['Members', 'admin.members.index', 'admin.members.*', 'users', 'members'],
+            ['Approvals', 'admin.approvals.queue', 'admin.approvals.*', 'clipboard', 'books'],
         ],
         'Catalog data' => [
             ['Authors', 'admin.authors.index', 'admin.authors.*', 'pencil', 'authors'],
             ['Categories', 'admin.categories.index', 'admin.categories.*', 'tag', 'categories'],
             ['Departments', 'admin.departments.index', 'admin.departments.*', 'building', 'departments'],
         ],
+        'School' => [
+            ['Students', 'admin.school.students.index', 'admin.school.students.*', 'users', 'students'],
+            ['Teachers', 'admin.school.teachers.index', 'admin.school.teachers.*', 'user', 'teachers'],
+            ['Classes', 'admin.school.sections.index', 'admin.school.sections.*', 'building', 'academics'],
+            ['Attendance', 'admin.school.attendance.index', 'admin.school.attendance.*', 'clipboard', 'attendance'],
+            ['Timetable', 'admin.school.timetable.index', 'admin.school.timetable.*', 'clock', 'timetable'],
+            ['Exams', 'admin.school.exams.index', 'admin.school.exams.*', 'star', 'exams'],
+            ['Marks entry', 'admin.school.marks.index', 'admin.school.marks.*', 'pencil', 'exams'],
+            ['Fees', 'admin.school.invoices.index', 'admin.school.invoices.*', 'chart', 'fees'],
+            ['Announcements', 'admin.school.announcements.index', 'admin.school.announcements.*', 'bell', 'announcements'],
+        ],
+        'School setup' => [
+            ['Promotion', 'admin.school.promotion.index', 'admin.school.promotion.*', 'arrow', 'students'],
+            ['Academic years', 'admin.school.academic-years.index', 'admin.school.academic-years.*', 'clock', 'academics'],
+            ['Terms', 'admin.school.terms.index', 'admin.school.terms.*', 'tag', 'academics'],
+            ['Grade levels', 'admin.school.grade-levels.index', 'admin.school.grade-levels.*', 'building', 'academics'],
+            ['Subjects', 'admin.school.subjects.index', 'admin.school.subjects.*', 'book', 'academics'],
+            ['Grade scale', 'admin.school.grade-scale.index', 'admin.school.grade-scale.*', 'star', 'exams'],
+            ['Fee types', 'admin.school.fee-types.index', 'admin.school.fee-types.*', 'tag', 'fees'],
+        ],
         'Insights' => [
             ['Reports', 'admin.reports.index', 'admin.reports.*', 'chart', 'reports'],
             ['Feedback', 'admin.feedback.index', 'admin.feedback.*', 'chat', 'feedback'],
         ],
-        'Administration' => [['Access rights', 'admin.access.index', 'admin.access.*', 'shield', '__admin']],
+        'Administration' => [
+            ['Access rights', 'admin.access.index', 'admin.access.*', 'shield', '__admin'],
+            ['Approval flows', 'admin.flows.index', 'admin.flows.*', 'check', '__admin'],
+        ],
     ];
     $visible = fn ($res) => $res === null || ($res === '__admin' ? $u->atLeast('admin') : $u->canDo($res, 'read'));
 
-    // notification bell
-    $notes = [];
-    if ($u->canDo('loans', 'read')) {
-        $n = \App\Models\Loan::where('state', 'issued')->whereNotNull('date_expected')->where('date_expected', '<', today()->toDateString())->count();
-        if ($n) $notes[] = ['Overdue loans', $n, route('admin.loans.index', ['overdue' => 1]), 'clock', 'bg-orange-100 text-orange-600'];
-    }
-    if ($u->canDo('books', 'read')) {
-        $n = \App\Models\Book::where('state', 'review')->count();
-        if ($n) $notes[] = ['Books waiting for review', $n, route('admin.books.index', ['state' => 'review']), 'book', 'bg-amber-100 text-amber-600'];
-        $n = \App\Models\Book::where('state', 'approved')->count();
-        if ($n) $notes[] = ['Approved - ready to release', $n, route('admin.books.index', ['state' => 'approved']), 'shield', 'bg-emerald-100 text-emerald-600'];
-    }
-    if ($u->canDo('feedback', 'read')) {
-        $n = \App\Models\Feedback::where('created_at', '>=', now()->startOfDay())->count();
-        if ($n) $notes[] = ['New feedback today', $n, route('admin.feedback.index'), 'chat', 'bg-sky-100 text-sky-600'];
-    }
-    $notifTotal = array_sum(array_column($notes, 1));
+    // notification bell: persistent notifications - they stay unread until opened / marked as read
+    $notifTotal = $u->notifications()->whereNull('read_at')->count();
+    $recentNotes = $u->notifications()->latest()->limit(8)->get();
+    $approvalCount = \App\Models\BookApproval::queueFor($u)->count();
+    $noteColors = ['violet' => 'bg-violet-100 text-violet-600', 'amber' => 'bg-amber-100 text-amber-600', 'green' => 'bg-emerald-100 text-emerald-600',
+                   'red' => 'bg-rose-100 text-rose-600', 'orange' => 'bg-orange-100 text-orange-600', 'sky' => 'bg-sky-100 text-sky-600'];
 @endphp
 
 <div id="overlay" class="fixed inset-0 z-30 hidden bg-slate-900/60 backdrop-blur-sm lg:hidden"></div>
@@ -103,6 +120,7 @@
                     <a href="{{ route($route) }}" class="group mb-0.5 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {{ $active ? 'bg-white text-violet-800 shadow-lg' : 'text-violet-100 hover:bg-white/10 hover:text-white' }}">
                         <span class="{{ $active ? 'text-violet-700' : 'text-violet-300 group-hover:text-white' }}">@include('partials.icon', ['name' => $icon])</span>
                         {{ $label }}
+                        @if ($label === 'Approvals' && $approvalCount)<span class="ml-auto rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-amber-950">{{ $approvalCount }}</span>@endif
                     </a>
                 @endforeach
             </div>
@@ -143,16 +161,30 @@
                 @include('partials.icon', ['name' => 'bell', 'class' => 'h-5 w-5'])
                 @if ($notifTotal)<span class="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">{{ $notifTotal > 99 ? '99+' : $notifTotal }}</span>@endif
             </summary>
-            <div class="absolute right-0 mt-2 w-72 overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-violet-100">
-                <div class="bg-gradient-to-r from-violet-700 to-purple-600 px-4 py-3 text-sm font-semibold text-white">Notifications</div>
-                @forelse ($notes as [$text, $count, $url, $ic, $cls])
-                    <a href="{{ $url }}" class="flex items-center gap-3 border-b border-violet-50 px-4 py-3 hover:bg-violet-50">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-xl {{ $cls }}">@include('partials.icon', ['name' => $ic, 'class' => 'h-5 w-5'])</span>
-                        <span class="flex-1 text-sm">{{ $text }}</span><span class="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700">{{ $count }}</span>
+            <div class="absolute right-0 mt-2 w-80 max-w-[90vw] overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-violet-100">
+                <div class="flex items-center justify-between bg-gradient-to-r from-violet-700 to-purple-600 px-4 py-3 text-sm font-semibold text-white">
+                    <span>Notifications @if ($notifTotal)<span class="ml-1 rounded-full bg-white/25 px-2 text-xs">{{ $notifTotal }} new</span>@endif</span>
+                    @if ($notifTotal)
+                        <form method="POST" action="{{ route('admin.notifications.read-all') }}">@csrf<button class="text-xs font-medium underline decoration-white/50 hover:decoration-white">Mark all read</button></form>
+                    @endif
+                </div>
+                <div class="max-h-96 overflow-y-auto">
+                @forelse ($recentNotes as $n)
+                    @php $d = $n->data; $unread = $n->read_at === null; @endphp
+                    <a href="{{ route('admin.notifications.open', $n->id) }}" class="flex items-start gap-3 border-b border-violet-50 px-4 py-3 hover:bg-violet-50 {{ $unread ? 'bg-violet-50/60' : 'opacity-70' }}">
+                        <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl {{ $noteColors[$d['color'] ?? 'violet'] ?? $noteColors['violet'] }}">@include('partials.icon', ['name' => $d['icon'] ?? 'bell', 'class' => 'h-5 w-5'])</span>
+                        <span class="min-w-0 flex-1">
+                            <span class="block truncate text-sm {{ $unread ? 'font-bold' : 'font-medium' }}">{{ $d['title'] ?? 'Notification' }}</span>
+                            <span class="line-clamp-2 text-xs text-slate-500">{{ $d['body'] ?? '' }}</span>
+                            <span class="mt-0.5 block text-[11px] text-slate-400">{{ $n->created_at->diffForHumans() }}</span>
+                        </span>
+                        @if ($unread)<span class="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-violet-600"></span>@endif
                     </a>
                 @empty
-                    <div class="px-4 py-6 text-center text-sm text-slate-500">You're all caught up 🎉</div>
+                    <div class="px-4 py-8 text-center text-sm text-slate-500">You're all caught up 🎉</div>
                 @endforelse
+                </div>
+                <a href="{{ route('admin.notifications.index') }}" class="block bg-slate-50 px-4 py-2.5 text-center text-sm font-semibold text-violet-700 hover:bg-violet-50">View all notifications</a>
             </div>
         </details>
 
@@ -166,6 +198,7 @@
             </summary>
             <div class="absolute right-0 mt-2 w-52 overflow-hidden rounded-2xl bg-white py-1 shadow-2xl ring-1 ring-violet-100">
                 <div class="border-b border-violet-50 px-4 py-2"><div class="truncate text-sm font-semibold">{{ $u->name }}</div><div class="truncate text-xs text-slate-500">{{ $u->email }}</div></div>
+                <a href="{{ route('password.change') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-violet-50">@include('partials.icon', ['name' => 'key', 'class' => 'h-4 w-4']) Change password</a>
                 <a href="{{ route('catalog') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-violet-50">@include('partials.icon', ['name' => 'globe', 'class' => 'h-4 w-4']) E-book catalog</a>
                 <form method="POST" action="{{ route('logout') }}">@csrf<button class="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-rose-600 hover:bg-rose-50">@include('partials.icon', ['name' => 'logout', 'class' => 'h-4 w-4']) Logout</button></form>
             </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LoginLog;
 use App\Models\User;
+use App\Support\Notify;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -26,8 +27,9 @@ class AuthController extends Controller
         $user = Auth::user();
         $user->forceFill(['last_login_at' => now()])->saveQuietly();
         LoginLog::create(['user_id' => $user->id, 'ip' => $request->ip()]);
+        if ($user->isStaff()) Notify::overdueDigest($user); else Notify::overdueForBorrower($user);
 
-        return redirect()->intended($user->isStaff() ? route('admin.dashboard') : route('catalog'));
+        return redirect()->intended($user->homeUrl());
     }
 
     public function showRegister()

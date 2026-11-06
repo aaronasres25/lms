@@ -3,11 +3,13 @@
 
 @section('hero')
 <section class="relative isolate overflow-hidden bg-[#2a0d6b] text-white">
-    @include('partials.bookshelf', ['class' => 'absolute inset-0 h-full w-full opacity-50 blur-[3px]'])
-    <div class="absolute inset-0 bg-gradient-to-r from-[#2a0d6b] via-[#4c1d95]/85 to-[#4c1d95]/30"></div>
-    <div class="relative mx-auto max-w-7xl px-4 py-10 md:py-14">
-        <h1 class="text-3xl font-extrabold sm:text-4xl">E-book Catalog</h1>
-        <p class="mt-1 text-violet-100">{{ $groups->sum(fn ($g) => $g->count()) }} titles{{ $search !== '' ? " matching “{$search}”" : '' }}{{ $selectedDept ? ' in ' . $selectedDept->name : '' }}</p>
+    @include('partials.photo-carousel', ['id' => 'catPhotos'])
+    <div class="absolute inset-0 bg-gradient-to-r from-[#2a0d6b]/90 via-[#3b1485]/55 to-transparent"></div>
+    <div class="relative mx-auto max-w-7xl px-4 py-12 md:py-16">
+        <div class="[text-shadow:0_2px_14px_rgba(0,0,0,.5)]">
+            <h1 class="text-3xl font-extrabold sm:text-4xl">E-book Catalog</h1>
+            <p class="mt-1 text-violet-50">{{ $groups->sum(fn ($g) => $g->count()) }} titles{{ $search !== '' ? " matching “{$search}”" : '' }}{{ $selectedDept ? ' in ' . $selectedDept->name : '' }}</p>
+        </div>
         <form method="GET" class="mt-5 flex max-w-3xl flex-col gap-3 sm:flex-row">
             <input type="hidden" name="filter_by" value="{{ $filterBy }}">
             @if ($selectedDept)<input type="hidden" name="dept_id" value="{{ $selectedDept->id }}">@endif
@@ -15,7 +17,7 @@
                 <span class="pl-4 text-violet-500">@include('partials.icon', ['name' => 'search', 'class' => 'h-5 w-5'])</span>
                 <input name="search" value="{{ $search }}" placeholder="Search title, author or description…" class="w-full bg-transparent px-3 py-3 text-slate-800 outline-none">
             </div>
-            <button class="rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-600 px-8 py-3 font-semibold shadow-xl hover:scale-105 transition">Search</button>
+            <button class="rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-600 px-8 py-3 font-semibold shadow-xl transition hover:scale-105">Search</button>
         </form>
     </div>
 </section>
@@ -83,3 +85,7 @@
     @endforeach
 </section>
 @endsection
+
+@push('scripts')
+<script>lmsPhotos('catPhotos', true, 5000);</script>
+@endpush

@@ -1,0 +1,75 @@
+# Render Blueprint - New > Blueprint > pick this repo.
+# Free plan is fine for a demo; see DEPLOY.md for what changes on paid plans (uploads, mail, cron).
+
+databases:
+  - name: lms-db
+    plan: free            # free Postgres EXPIRES after 30 days - upgrade (e.g. basic-256mb) for real use
+    region: frankfurt
+    databaseName: lms
+    user: lms
+
+services:
+  - type: web
+    name: lms
+    runtime: docker
+    plan: free            # change to "starter" to use the persistent disk below
+    region: frankfurt     # must match the database region
+    dockerfilePath: ./Dockerfile
+    autoDeploy: false     # GitHub Actions deploys after tests pass (deploy hook) - see .github/workflows
+    healthCheckPath: /up
+    envVars:
+      - key: APP_NAME
+        value: LMS
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false       # paste the output of: php artisan key:generate --show
+      - key: APP_URL
+        sync: false       # e.g. https://lms.onrender.com (set after the first deploy)
+      - key: LMS_COMPANY
+        value: Miller's LMS
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: info
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        fromDatabase:
+          name: lms-db
+          property: connectionString
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: MAIL_MAILER
+        value: log        # free plan blocks SMTP ports - see DEPLOY.md for mail options
+      - key: RUN_MIGRATIONS
+        value: "true"
+      - key: RUN_SEED
+        value: "true"     # first deploy only (reference data + admin) - set to "false" afterwards
+      - key: ADMIN_NAME
+        value: Administrator
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+
+    # --- PAID plans only: keeps uploaded e-books & covers across deploys ---
+    # disk:
+    #   name: lms-storage
+    #   mountPath: /var/www/html/storage/app
+    #   sizeGB: 5
+
+# --- OPTIONAL scheduled jobs (cron services are paid). One per command: ---
+#  - type: cron
+#    name: lms-overdue
+#    runtime: docker
+#    region: frankfurt
+#    schedule: "0 3 * * *"
+#    dockerCommand: php artisan lms:recompute-overdue
+#    (copy the same envVars as the web service)

@@ -2,14 +2,14 @@
 @section('title', $title)
 @section('content')
 @php
-    $res = \Illuminate\Support\Str::after($prefix, 'admin.');
     $me = auth()->user();
-    $canCreate = $me->canDo($res, 'create'); $canUpdate = $me->canDo($res, 'update'); $canDelete = $me->canDo($res, 'delete');
+    $canCreate = $me->canDo($perm, 'create'); $canUpdate = $me->canDo($perm, 'update'); $canDelete = $me->canDo($perm, 'delete');
+    $cols = min(count($fields) + 1, 4);
 @endphp
 <div class="mb-5"><h1 class="text-2xl font-extrabold">{{ \Illuminate\Support\Str::plural($title) }}</h1><p class="text-sm text-slate-500">{{ $rows->total() }} records</p></div>
 
 @if ($canCreate)
-<form method="POST" action="{{ route($prefix . '.store') }}" class="card mb-5 grid gap-3 p-4 md:grid-cols-{{ min(count($fields) + 1, 4) }}">@csrf
+<form method="POST" action="{{ route($prefix . '.store') }}" class="card mb-5 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-{{ $cols }}">@csrf
     @foreach ($fields as $f) @include('admin.masters._field', ['f' => $f, 'value' => old($f['name']), 'parents' => $parents]) @endforeach
     <button class="btn btn-primary self-end justify-center">@include('partials.icon', ['name' => 'plus', 'class' => 'h-4 w-4']) Add {{ strtolower($title) }}</button>
 </form>
@@ -19,7 +19,8 @@
 <div class="tbl-wrap"><div class="tbl-scroll"><table class="tbl">
     <thead><tr><th class="num">#</th><th>Name</th>@foreach ($extra as $label => $fn)<th>{{ $label }}</th>@endforeach @if ($canUpdate || $canDelete)<th class="text-right">Actions</th>@endif</tr></thead>
     <tbody>@forelse ($rows as $row)
-        <tr class="align-top"><td class="num">{{ $rows->firstItem() + $loop->index }}</td><td class="font-semibold">{{ $row->name }}</td>
+        <tr class="align-top"><td class="num">{{ $rows->firstItem() + $loop->index }}</td>
+            <td class="font-semibold">@if ($hasShow)<a class="text-violet-800 hover:underline" href="{{ route($prefix . '.show', $row->id) }}">{{ $row->label ?? $row->name ?? $row->title }}</a>@else{{ $row->label ?? $row->name ?? $row->title }}@endif</td>
             @foreach ($extra as $label => $fn)<td>{{ $fn($row) }}</td>@endforeach
             @if ($canUpdate || $canDelete)<td class="text-right">
                 @if ($canUpdate)

@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\AccessRight;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /** Admin screen: change a user's role / status and grant or revoke Read-Create-Update-Delete per module. */
@@ -72,5 +74,28 @@ class AccessRightController extends Controller
     {
         $user->accessRights()->delete();
         return redirect()->route('admin.access.index', ['user' => $user->id])->with('success', "{$user->name} is back on the default rights of the “{$user->role}” role.");
+    }
+
+    /** Admin sets (or generates) a new password for a user; by default they must change it at next login. */
+    public function resetPassword(Request $request, User $user)
+    {
+        $data = $request->validate(['password' => ['nullable', 'string', 'min:8', 'max:100']]);
+
+        $plain = $data['password'] ?? null;
+        $generated = ! $plain;
+        if ($generated) $plain = Str::password(12, true, true, false);
+
+        $user->forceFill([
+            'password'             => $plain,
+            'must_change_password' => $request->boolean('force_change'),
+            'remember_token'       => Str::random(60),
+        ])->save();
+
+        // sign the user out everywhere (database session driver)
+        try { DB::table('sessions')->where('user_id', $user->id)->delete(); } catch (\Throwable $e) { /* other session driver */ }
+
+        return redirect()->route('admin.access.index', ['user' => $user->id])
+            ->with('success', "Password reset for {$user->name}." . ($generated ? ' A random password was generated.' : ''))
+            ->with('temp_password', $plain);
     }
 }

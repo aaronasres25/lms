@@ -11,9 +11,9 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /** Hierarchy: each role implies all lower ones (Odoo implied_ids chain). */
-    public const ROLES = ['reader' => 0, 'user' => 1, 'qa' => 2, 'manager' => 3, 'admin' => 4];
+    public const ROLES = ['reader' => 0, 'student' => 0, 'teacher' => 0, 'user' => 1, 'qa' => 2, 'manager' => 3, 'admin' => 4];
 
-    protected $fillable = ['name', 'email', 'password', 'role', 'active', 'last_login_at'];
+    protected $fillable = ['name', 'email', 'password', 'role', 'active', 'must_change_password', 'last_login_at'];
     protected $hidden = ['password', 'remember_token'];
 
     protected function casts(): array
@@ -23,6 +23,7 @@ class User extends Authenticatable
             'last_login_at'     => 'datetime',
             'password'          => 'hashed',
             'active'            => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 
@@ -45,6 +46,22 @@ class User extends Authenticatable
     protected $rightsCache = null;
 
     public function member() { return $this->hasOne(Member::class); }
+    public function teacher() { return $this->hasOne(Teacher::class); }
+    public function student() { return $this->hasOne(Student::class); }
+
+    public function isTeacher(): bool { return $this->role === 'teacher'; }
+    public function isStudent(): bool { return $this->role === 'student'; }
+
+    /** Where this person lands after signing in. */
+    public function homeUrl(): string
+    {
+        return match (true) {
+            $this->isStaff()   => route('admin.dashboard'),
+            $this->isTeacher() => route('teacher.dashboard'),
+            $this->isStudent() => route('student.dashboard'),
+            default            => route('catalog'),
+        };
+    }
     public function accessRights() { return $this->hasMany(AccessRight::class); }
 
     /**
@@ -73,6 +90,6 @@ class User extends Authenticatable
 
     public function scopeStaff($q)
     {
-        return $q->where('active', true)->where('role', '!=', 'reader');
+        return $q->where('active', true)->whereIn('role', ['user', 'qa', 'manager', 'admin']);   // library/back-office staff only
     }
 }

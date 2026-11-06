@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Exceptions\LmsException;
 use App\Mail\NewBookReleased;
+use App\Support\Notify;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -59,6 +60,7 @@ class Book extends Model
     public function issuedLoans() { return $this->hasMany(Loan::class)->where('state', 'issued'); }
     public function versionHistory() { return $this->hasMany(BookVersionHistory::class)->latest('id'); }
     public function readHistories() { return $this->hasMany(ReadHistory::class); }
+    public function approvals() { return $this->hasMany(BookApproval::class); }
     public function notifiedUsers() { return $this->belongsToMany(User::class, 'book_notifications')->withTimestamps(); }
 
     /* ----------------------------------------------------------------- scopes / accessors */
@@ -92,7 +94,12 @@ class Book extends Model
 
     public function getCoverUrlAttribute(): string
     {
-        return $this->cover_path ? Storage::disk('public')->url($this->cover_path) : asset('images/placeholder.jpg');
+        if ($this->cover_path) return Storage::disk('public')->url($this->cover_path);
+        if (file_exists(public_path('images/placeholder.jpg'))) return asset('images/placeholder.jpg');
+
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 40"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+             . '<stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#3b0f8c"/></linearGradient></defs><rect width="30" height="40" fill="url(#g)"/></svg>';
+        return 'data:image/svg+xml,' . rawurlencode($svg);
     }
 
     /* ----------------------------------------------------------------- helpers */
@@ -169,21 +176,117 @@ class Book extends Model
             throw new LmsException("Cannot submit for review. Please fill the mandatory fields: " . implode(', ', $missing));
         }
 
-        $this->update(['state' => 'review']);
-        $this->logActivity("Document submitted for review by {$by->name}. Reason: " . ($this->change_reason ?: 'Not specified'));
+        DB::transaction(function () use ($by) {
+            // snapshot the approval flow that applies to this department
+            $cycle = ((int) BookApproval::where('book_id', $this->id)->max('cycle')) + 1;
+            foreach (ApprovalStep::resolveFor($this)->values() as $i => $step) {
+                BookApproval::create([
+                    'book_id' => $this->id, 'cycle' => $cycle, 'sequence' => $step->sequence, 'title' => $step->title,
+                    'role' => $step->role, 'user_id' => $step->user_id, 'status' => 'pending',
+                    'is_current' => $i === 0, 'requested_by' => $by->id,
+                ]);
+            }
+            $this->update(['state' => 'review']);
+        });
+
+        $first = $this->currentApproval();
+        $this->logActivity("Submitted for review by {$by->name}. Reason: " . ($this->change_reason ?: 'Not specified')
+            . ($first ? ". Waiting for {$first->assignee_label} (step {$first->sequence}: {$first->title})." : ''));
+        if ($first) $this->notifyTurn($first, $by);
     }
 
-    public function approve(User $by): void
+    /** The step whose turn it is (null when the document is not under review). */
+    public function currentApproval(): ?BookApproval
     {
-        self::requireRole($by, 'qa', 'Only Library QA can approve documents.');
-        if ($this->state !== 'review') throw new LmsException('Only documents under review can be approved.');
+        return BookApproval::where('book_id', $this->id)->current()->orderBy('sequence')->first();
+    }
 
-        $this->update([
-            'state'         => 'approved',
-            'approval_date' => today(),
-            'expiry_date'   => today()->addYears(config('lms.approval_valid_years', 2)),
-        ]);
-        $this->logActivity("Document approved by {$by->name}. Valid until {$this->expiry_date->toDateString()}.");
+    /** Approve button rule: only the assigned approver of the CURRENT step (or an admin when override is on). */
+    public function canBeApprovedBy(User $user): bool
+    {
+        if (! $user->active || $this->state !== 'review') return false;
+        $step = $this->currentApproval();
+        if (! $step) return false;
+
+        return $step->isAssignedTo($user) || ($user->role === 'admin' && config('lms.approval_admin_override', true));
+    }
+
+    public function approve(User $by, ?string $comment = null): void
+    {
+        if ($this->state !== 'review') throw new LmsException('Only documents under review can be approved.');
+        $step = $this->currentApproval();
+        if (! $step) throw new LmsException('There is no pending approval step for this document.');
+
+        if (! $this->canBeApprovedBy($by)) {
+            throw new LmsException("It is not your turn. Waiting for {$step->assignee_label} (step {$step->sequence}: {$step->title}).");
+        }
+        $override = ! $step->isAssignedTo($by);
+
+        $next = null;
+        DB::transaction(function () use ($by, $comment, $step, &$next) {
+            $step->update(['status' => 'approved', 'is_current' => false, 'acted_by' => $by->id, 'acted_at' => now(), 'comment' => $comment]);
+
+            $next = BookApproval::where('book_id', $this->id)->where('cycle', $step->cycle)
+                ->where('status', 'pending')->orderBy('sequence')->first();
+
+            if ($next) {
+                $next->update(['is_current' => true]);
+            } else {
+                $this->update([
+                    'state'         => 'approved',
+                    'approval_date' => today(),
+                    'expiry_date'   => today()->addYears(config('lms.approval_valid_years', 2)),
+                ]);
+            }
+        });
+
+        $note = $override ? ' (admin override)' : '';
+        $requesterId = $step->requested_by;
+
+        if ($next) {
+            $this->logActivity("Step {$step->sequence} ({$step->title}) approved by {$by->name}{$note}. Next: {$next->assignee_label} (step {$next->sequence}: {$next->title}).");
+            $this->notifyTurn($next, User::find($requesterId));
+        } else {
+            $this->logActivity("Final approval by {$by->name}{$note}. Document approved, valid until {$this->expiry_date->toDateString()}.");
+            $url = route('admin.books.show', $this, false);
+            if ($requesterId && ($requester = User::find($requesterId))) {
+                Notify::send($requester, 'Document approved', "\"{$this->name}\" passed every approval step.", $url, 'check', 'green', ['book_id' => $this->id]);
+            }
+            Notify::send(User::staff()->whereIn('role', ['manager', 'admin'])->get(), 'Ready to release',
+                "\"{$this->name}\" is fully approved and can be released.", $url, 'shield', 'green', ['book_id' => $this->id]);
+        }
+    }
+
+    public function reject(User $by, string $comment): void
+    {
+        if (trim($comment) === '') throw new LmsException('Please give a reason for rejecting the document.');
+        if ($this->state !== 'review') throw new LmsException('Only documents under review can be rejected.');
+        $step = $this->currentApproval();
+        if (! $step) throw new LmsException('There is no pending approval step for this document.');
+
+        if (! $this->canBeApprovedBy($by)) {
+            throw new LmsException("It is not your turn. Waiting for {$step->assignee_label} (step {$step->sequence}: {$step->title}).");
+        }
+
+        DB::transaction(function () use ($by, $comment, $step) {
+            $step->update(['status' => 'rejected', 'is_current' => false, 'acted_by' => $by->id, 'acted_at' => now(), 'comment' => $comment]);
+            BookApproval::where('book_id', $this->id)->where('cycle', $step->cycle)->where('status', 'pending')->update(['status' => 'skipped']);
+            $this->update(['state' => 'draft', 'change_reason' => "Rejected at step {$step->sequence} ({$step->title}): {$comment}"]);
+        });
+
+        $this->logActivity("Rejected by {$by->name} at step {$step->sequence} ({$step->title}). Reason: {$comment}");
+        if ($step->requested_by && ($requester = User::find($step->requested_by))) {
+            Notify::send($requester, 'Document rejected', "\"{$this->name}\" was rejected: {$comment}",
+                route('admin.books.show', $this, false), 'x', 'red', ['book_id' => $this->id]);
+        }
+    }
+
+    private function notifyTurn(BookApproval $step, ?User $requester): void
+    {
+        Notify::send($step->assignees(), 'Approval needed',
+            "\"{$this->name}\" is waiting for your approval (step {$step->sequence}: {$step->title})"
+            . ($requester ? ", requested by {$requester->name}." : '.'),
+            route('admin.books.show', $this, false), 'shield', 'amber', ['book_id' => $this->id]);
     }
 
     public function release(User $by): void
@@ -203,6 +306,8 @@ class Book extends Model
             }
         }
         $this->notifiedUsers()->sync($users->pluck('id')->all());
+        Notify::send($users->filter(fn ($u) => $u->canDo('books', 'read')), 'New document released',
+            "\"{$this->name}\" (v{$this->version}) is now available.", route('admin.books.show', $this, false), 'book', 'violet', ['book_id' => $this->id]);
         $this->logActivity("Document released by {$by->name}. Notifications queued for {$users->count()} users.");
     }
 

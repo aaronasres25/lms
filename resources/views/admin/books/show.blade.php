@@ -13,8 +13,9 @@
         @if ($book->state === 'draft' && $u->atLeast('qa'))
             <form method="POST" action="{{ route('admin.books.submit', $book) }}">@csrf<button class="rounded bg-[#5b21b6] px-4 py-2 text-white">Submit to review</button></form>
         @endif
-        @if ($book->state === 'review' && $u->atLeast('qa'))
-            <form method="POST" action="{{ route('admin.books.approve', $book) }}">@csrf<button class="rounded bg-green-700 px-4 py-2 text-white">Approve</button></form>
+        @if ($book->canBeApprovedBy($u))
+            <button onclick="document.getElementById('approveDialog').showModal()" class="rounded bg-green-700 px-4 py-2 font-semibold text-white hover:bg-green-800">✔ Approve</button>
+            <button onclick="document.getElementById('rejectDialog').showModal()" class="rounded bg-rose-600 px-4 py-2 font-semibold text-white hover:bg-rose-700">✖ Reject</button>
         @endif
         @if ($book->state === 'approved' && $u->atLeast('manager'))
             <form method="POST" action="{{ route('admin.books.release', $book) }}" onsubmit="return confirm('Release and notify all staff by e-mail?')">@csrf<button class="rounded bg-[#5b21b6] px-4 py-2 text-white">Release</button></form>
@@ -40,6 +41,43 @@
 
 <div class="grid gap-6 lg:grid-cols-3">
     <div class="space-y-6 lg:col-span-2">
+        @php
+            $__max = $book->approvals->max('cycle');
+            $__round = $book->approvals->where('cycle', $__max)->sortBy('sequence');
+            $__cur = $__round->firstWhere('is_current', true);
+            $__badge = ['approved' => 'bg-green-100 text-green-800', 'rejected' => 'bg-rose-100 text-rose-800', 'pending' => 'bg-amber-100 text-amber-800', 'skipped' => 'bg-slate-200 text-slate-600'];
+            $__dot = ['approved' => 'bg-green-500', 'rejected' => 'bg-rose-500', 'pending' => 'bg-amber-400', 'skipped' => 'bg-slate-300'];
+        @endphp
+        @if ($__round->isNotEmpty())
+        <div class="card p-5">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <h3 class="font-bold">Approval workflow <span class="ml-1 rounded bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700">round {{ $__max }}</span></h3>
+                @if ($book->state === 'review' && $__cur)
+                    <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">Waiting for {{ $__cur->assignee_label }} · step {{ $__cur->sequence }}</span>
+                @endif
+            </div>
+            @if ($book->state === 'review' && $__cur && ! $book->canBeApprovedBy($u))
+                <p class="mb-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">It is not your turn. The approve button appears for <b>{{ $__cur->assignee_label }}</b> once the earlier steps are complete.</p>
+            @endif
+            <ol class="relative ml-3 space-y-5 border-l-2 border-violet-200 pl-6">
+                @foreach ($__round as $a)
+                    <li class="relative">
+                        <span class="absolute -left-[2.15rem] top-0.5 flex h-5 w-5 items-center justify-center rounded-full ring-4 ring-white {{ $__dot[$a->status] ?? 'bg-slate-300' }} {{ $a->is_current ? 'animate-pulse' : '' }}"></span>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="font-semibold">Step {{ $a->sequence }}: {{ $a->title }}</span>
+                            <span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $__badge[$a->status] ?? '' }}">{{ ucfirst($a->status) }}</span>
+                        </div>
+                        <div class="text-sm text-slate-500">Assigned to {{ $a->assignee_label }}</div>
+                        @if ($a->acted_at)
+                            <div class="text-sm text-slate-600">{{ $a->status === 'rejected' ? 'Rejected' : 'Approved' }} by <b>{{ $a->actor->name ?? 'someone' }}</b> · {{ $a->acted_at->format('Y-m-d H:i') }}</div>
+                            @if ($a->comment)<div class="mt-1 rounded-lg bg-slate-50 px-3 py-1.5 text-sm italic text-slate-600">“{{ $a->comment }}”</div>@endif
+                        @endif
+                    </li>
+                @endforeach
+            </ol>
+        </div>
+        @endif
+
         <div class="rounded-xl bg-white p-5 shadow">
             <dl class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                 <div><dt class="text-slate-500">Author</dt><dd>{{ $book->author->name ?? '—' }}</dd></div>
@@ -78,6 +116,24 @@
             <ul class="space-y-3 text-sm">@forelse ($book->activities as $a)<li><div class="text-xs text-slate-400">{{ $a->created_at->format('Y-m-d H:i') }} · {{ $a->user->name ?? 'System' }}</div>{{ $a->body }}</li>@empty<li class="text-slate-500">Nothing yet.</li>@endforelse</ul></div>
     </aside>
 </div>
+
+<dialog id="approveDialog" class="w-full max-w-md rounded-2xl p-0 shadow-2xl backdrop:bg-black/40">
+    <form method="POST" action="{{ route('admin.books.approve', $book) }}" class="space-y-4 p-6">@csrf
+        <h3 class="text-lg font-bold">Approve “{{ $book->name }}”</h3>
+        @php $__s = $book->currentApproval(); @endphp
+        @if ($__s)<p class="text-sm text-slate-500">Step {{ $__s->sequence }}: {{ $__s->title }}@if (! $__s->isAssignedTo($u)) <span class="font-semibold text-rose-600">(administrator override)</span>@endif</p>@endif
+        <textarea name="comment" rows="3" placeholder="Comment (optional)" class="w-full rounded-lg border px-3 py-2"></textarea>
+        <div class="flex justify-end gap-2"><button type="button" onclick="this.closest('dialog').close()" class="rounded border px-4 py-2">Cancel</button><button class="rounded bg-green-700 px-4 py-2 font-semibold text-white">Approve</button></div>
+    </form>
+</dialog>
+<dialog id="rejectDialog" class="w-full max-w-md rounded-2xl p-0 shadow-2xl backdrop:bg-black/40">
+    <form method="POST" action="{{ route('admin.books.reject', $book) }}" class="space-y-4 p-6">@csrf
+        <h3 class="text-lg font-bold">Reject “{{ $book->name }}”</h3>
+        <p class="text-sm text-slate-500">The document goes back to Draft and the person who submitted it is notified.</p>
+        <textarea name="comment" rows="3" required placeholder="Reason for rejection (required)" class="w-full rounded-lg border px-3 py-2"></textarea>
+        <div class="flex justify-end gap-2"><button type="button" onclick="this.closest('dialog').close()" class="rounded border px-4 py-2">Cancel</button><button class="rounded bg-rose-600 px-4 py-2 font-semibold text-white">Reject</button></div>
+    </form>
+</dialog>
 
 <dialog id="verDialog" class="w-full max-w-md rounded-xl p-0 shadow-2xl backdrop:bg-black/40">
     <form method="POST" action="{{ route('admin.books.version', $book) }}" class="space-y-4 p-6">@csrf

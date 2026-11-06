@@ -18,8 +18,9 @@
     {{-- ===== welcome banner ===== --}}
     <section class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#e4dbff] via-[#d9ccff] to-[#c2aeff] px-6 py-8 shadow-sm sm:px-10 sm:py-10">
         <div class="absolute inset-y-0 right-0 hidden w-3/5 sm:block">
-            @include('partials.bookshelf', ['class' => 'absolute inset-0 h-full w-full opacity-60 blur-[2px]'])
-            <div class="absolute inset-0 bg-gradient-to-r from-[#d9ccff] via-[#d9ccff]/70 to-transparent"></div>
+            @include('partials.photo-bg', ['i' => 1, 'class' => 'absolute inset-0 bg-cover bg-center opacity-80'])
+            <div class="absolute inset-0 bg-violet-500/25 mix-blend-multiply"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-[#d9ccff] via-[#d9ccff]/75 to-transparent"></div>
             @include('partials.open-book', ['class' => 'absolute -bottom-2 right-6 w-64 drop-shadow-2xl lg:w-80'])
         </div>
         <div class="relative max-w-xl">
@@ -48,6 +49,26 @@
             </{{ $tag }}>
         @endforeach
     </div>
+
+    {{-- ===== school snapshot (only for people who may see school data) ===== --}}
+    @php
+        $school = array_values(array_filter([
+            ['Students', \App\Models\Student::where('status', 'active')->count(), 'users', route('admin.school.students.index'), 'students', 'text-violet-600 bg-violet-100'],
+            ['Teachers', \App\Models\Teacher::where('status', 'active')->count(), 'user', route('admin.school.teachers.index'), 'teachers', 'text-sky-600 bg-sky-100'],
+            ['Classes', \App\Models\Section::count(), 'building', route('admin.school.sections.index'), 'academics', 'text-emerald-600 bg-emerald-100'],
+            ['Fees outstanding', number_format(max(\App\Models\FeeInvoice::where('status', '!=', 'void')->sum('total') - \App\Models\FeePayment::sum('amount'), 0), 2), 'chart', route('admin.school.invoices.index'), 'fees', 'text-rose-600 bg-rose-100'],
+        ], fn ($c) => $u->canDo($c[4], 'read')));
+    @endphp
+    @if ($school)
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            @foreach ($school as [$label, $value, $icon, $url, $perm, $cls])
+                <a href="{{ $url }}" class="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-violet-100 transition hover:-translate-y-1 hover:shadow-lg">
+                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl {{ $cls }}">@include('partials.icon', ['name' => $icon, 'class' => 'h-5 w-5'])</span>
+                    <span><span class="block text-2xl font-extrabold text-violet-950">{{ $value }}</span><span class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ $label }}</span></span>
+                </a>
+            @endforeach
+        </div>
+    @endif
 
     {{-- ===== analytics + categories ===== --}}
     <div class="grid gap-5 lg:grid-cols-3">
@@ -97,7 +118,8 @@
         </section>
 
         <section class="relative overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-[#2a0d6b] via-[#3d1389] to-[#5b21b6] p-6 text-white shadow-sm">
-            @include('partials.bookshelf', ['class' => 'absolute inset-0 h-full w-full opacity-25 blur-[2px]'])
+            @include('partials.photo-bg', ['i' => 2, 'class' => 'absolute inset-0 bg-cover bg-right opacity-45'])
+            <div class="absolute inset-0 bg-gradient-to-br from-[#2a0d6b]/95 via-[#3d1389]/80 to-[#5b21b6]/50"></div>
             <div class="relative">
                 <h3 class="text-2xl font-extrabold">Discover. Read. Learn.</h3>
                 <p class="mt-1 text-sm text-violet-200">Your digital library, anytime, anywhere.</p>
