@@ -1,0 +1,32 @@
+{
+  "fee_types": [
+    {
+      "name": "Tuition",
+      "amount": 1200
+    },
+    {
+      "name": "Library fee",
+      "amount": 50
+    },
+    {
+      "name": "Transport",
+      "amount": 300
+    },
+    {
+      "name": "Uniform",
+      "amount": 150
+    }
+  ],
+  "generate": {
+    "term": "Term 1",
+    "fee_types": [
+      "Tuition",
+      "Library fee",
+      "Transport"
+    ],
+    "due_days": 30,
+    "paid_rate": 0.55,
+    "partial_rate": 0.2,
+    "overdue_rate": 0.2
+  }
+}

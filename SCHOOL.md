@@ -33,3 +33,22 @@ Production seeding creates only the reference data and the admin from `ADMIN_EMA
 
 ## Config
 `config/school.php`: weekdays, period times, attendance statuses, library limits for students/teachers.
+
+## Demo data from JSON files
+```bash
+php artisan lms:demo-data                  # load everything from database/demo/*.json (safe to repeat)
+php artisan lms:demo-data --list           # show the sections and files
+php artisan lms:demo-data --only=books,students,marks
+php artisan lms:demo-data --path=/my/own/json/folder
+php artisan lms:demo-data --fresh          # wipe library + school data first (asks to confirm; users are kept)
+```
+Sections (in this order): `users` · `flows` (approval flows) · `books` (authors, categories, books - e-books get a real readable PDF) · `members` (library members + loans) · `subjects` · `teachers` · `sections` · `students` · `timetable` · `exams` · `marks` · `attendance` · `fees` · `announcements`.
+
+* Edit the files to change the data, or add your own rows. Every record is looked up first (by e-mail, admission number, book identity...), so re-running never creates duplicates.
+* `students.json`, `marks.json`, `attendance.json`, `fees.json` and `timetable.json` can **generate** many rows from a few lines (class sizes, mean marks, absence rates, paid/overdue shares...). The numbers are derived from hashes, so the same files always give the same data.
+* A book with `"state": "review"` is submitted through the real approval chain, so you can try approve/reject straight away.
+* Demo logins (password `password`): `abel.student@demo.test`, `selam.student@demo.test`, `tigist.teacher@demo.test`, `hana.clerk@demo.test`, `dawit.qa@demo.test`, `meron.manager@demo.test`, `abebe.reader@demo.test`.
+* Refuses to run when `APP_ENV=production` unless you pass `--force`.
+
+## Collapsible sidebar
+Use the menu button at the top-left of the page (desktop) to collapse the sidebar to icons or expand it again. Your choice is remembered per browser. On phones the sidebar stays a slide-in drawer.

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Hana Bekele",
+    "email": "hana.clerk@demo.test",
+    "role": "user",
+    "password": "password"
+  },
+  {
+    "name": "Dawit Alemu",
+    "email": "dawit.qa@demo.test",
+    "role": "qa",
+    "password": "password"
+  },
+  {
+    "name": "Meron Tadesse",
+    "email": "meron.manager@demo.test",
+    "role": "manager",
+    "password": "password"
+  },
+  {
+    "name": "Abebe Girma",
+    "email": "abebe.reader@demo.test",
+    "role": "reader",
+    "password": "password"
+  },
+  {
+    "name": "Selam Haile",
+    "email": "selam.reader@demo.test",
+    "role": "reader",
+    "password": "password"
+  },
+  {
+    "name": "Yonas Kebede",
+    "email": "yonas.reader@demo.test",
+    "role": "reader",
+    "password": "password"
+  }
+]

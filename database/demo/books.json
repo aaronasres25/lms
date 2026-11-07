@@ -1,0 +1,263 @@
+{
+  "authors": [
+    {
+      "name": "Chinua Achebe",
+      "bio": "Nigerian novelist, author of Things Fall Apart."
+    },
+    {
+      "name": "Stephen Hawking",
+      "bio": "English theoretical physicist and cosmologist."
+    },
+    {
+      "name": "Richard Dawkins",
+      "bio": "Evolutionary biologist and author."
+    },
+    {
+      "name": "Robert C. Martin",
+      "bio": "Software engineer and author of Clean Code."
+    },
+    {
+      "name": "Eric Matthes",
+      "bio": "Teacher and author of Python Crash Course."
+    },
+    {
+      "name": "James Stewart",
+      "bio": "Mathematician and calculus textbook author."
+    },
+    {
+      "name": "Jared Diamond",
+      "bio": "Geographer and historian."
+    },
+    {
+      "name": "Charles Dickens",
+      "bio": "English novelist of the Victorian era."
+    },
+    {
+      "name": "Haddis Alemayehu",
+      "bio": "Ethiopian novelist, author of Fikir Eske Mekabir."
+    },
+    {
+      "name": "Library Documentation Team",
+      "bio": "Internal policy and procedure authors."
+    }
+  ],
+  "categories": [
+    "Literature",
+    "Science & Technology",
+    "Education",
+    "Mathematics",
+    "History",
+    "Policy",
+    "Procedure",
+    "Manual",
+    "Technical Guide"
+  ],
+  "books": [
+    {
+      "name": "Things Fall Apart",
+      "author": "Chinua Achebe",
+      "category": "Literature",
+      "department": "Academic Library / Humanities",
+      "publication_year": 1958,
+      "state": "released",
+      "description": "Things Fall Apart - demo title.",
+      "copies": 4,
+      "fine_per_day": 2
+    },
+    {
+      "name": "A Brief History of Time",
+      "author": "Stephen Hawking",
+      "category": "Science & Technology",
+      "department": "Academic Library / Science",
+      "publication_year": 1988,
+      "state": "released",
+      "description": "A Brief History of Time - demo title.",
+      "copies": 3,
+      "fine_per_day": 2,
+      "is_ebook": true,
+      "pages": 10,
+      "reads": 64
+    },
+    {
+      "name": "The Selfish Gene",
+      "author": "Richard Dawkins",
+      "category": "Science & Technology",
+      "department": "Academic Library / Science",
+      "publication_year": 1976,
+      "state": "released",
+      "description": "The Selfish Gene - demo title.",
+      "copies": 2,
+      "fine_per_day": 2
+    },
+    {
+      "name": "Clean Code",
+      "author": "Robert C. Martin",
+      "category": "Science & Technology",
+      "department": "ICT / System Development",
+      "publication_year": 2008,
+      "state": "released",
+      "description": "Clean Code - demo title.",
+      "copies": 3,
+      "fine_per_day": 3,
+      "is_ebook": true,
+      "pages": 12,
+      "reads": 88
+    },
+    {
+      "name": "Python Crash Course",
+      "author": "Eric Matthes",
+      "category": "Education",
+      "department": "ICT / System Development",
+      "publication_year": 2019,
+      "state": "released",
+      "description": "Python Crash Course - demo title.",
+      "copies": 5,
+      "fine_per_day": 3,
+      "is_ebook": true,
+      "pages": 14,
+      "reads": 120
+    },
+    {
+      "name": "Calculus: Early Transcendentals",
+      "author": "James Stewart",
+      "category": "Mathematics",
+      "department": "Academic Library / Science",
+      "publication_year": 2015,
+      "state": "released",
+      "description": "Calculus: Early Transcendentals - demo title.",
+      "copies": 6,
+      "fine_per_day": 2
+    },
+    {
+      "name": "Guns, Germs, and Steel",
+      "author": "Jared Diamond",
+      "category": "History",
+      "department": "Academic Library / Humanities",
+      "publication_year": 1997,
+      "state": "released",
+      "description": "Guns, Germs, and Steel - demo title.",
+      "copies": 2,
+      "is_ebook": true,
+      "pages": 9,
+      "reads": 41
+    },
+    {
+      "name": "Oliver Twist",
+      "author": "Charles Dickens",
+      "category": "Literature",
+      "department": "Academic Library / Humanities",
+      "publication_year": 1838,
+      "state": "released",
+      "description": "Oliver Twist - demo title.",
+      "copies": 3,
+      "fine_per_day": 1
+    },
+    {
+      "name": "Fikir Eske Mekabir",
+      "author": "Haddis Alemayehu",
+      "category": "Literature",
+      "department": "Academic Library / Humanities",
+      "publication_year": 1965,
+      "state": "released",
+      "description": "Fikir Eske Mekabir - demo title.",
+      "copies": 5,
+      "fine_per_day": 1,
+      "is_ebook": true,
+      "pages": 11,
+      "reads": 73
+    },
+    {
+      "name": "Employee Handbook v2",
+      "author": "Library Documentation Team",
+      "category": "Policy",
+      "department": "HR",
+      "publication_year": 2025,
+      "state": "released",
+      "description": "Company policies for all staff.",
+      "is_ebook": true,
+      "pages": 8,
+      "reads": 30
+    },
+    {
+      "name": "HR Policy Guide",
+      "author": "Library Documentation Team",
+      "category": "Policy",
+      "department": "HR",
+      "publication_year": 2025,
+      "state": "released",
+      "description": "HR Policy Guide - demo title.",
+      "is_ebook": true,
+      "pages": 7,
+      "reads": 22
+    },
+    {
+      "name": "Finance Procedures Manual",
+      "author": "Library Documentation Team",
+      "category": "Manual",
+      "department": "Finance",
+      "publication_year": 2024,
+      "state": "released",
+      "description": "Finance Procedures Manual - demo title.",
+      "is_ebook": true,
+      "pages": 9,
+      "secure": true,
+      "reads": 18
+    },
+    {
+      "name": "ICT Best Practices",
+      "author": "Library Documentation Team",
+      "category": "Technical Guide",
+      "department": "ICT / Infrastructure",
+      "publication_year": 2025,
+      "state": "released",
+      "description": "ICT Best Practices - demo title.",
+      "is_ebook": true,
+      "pages": 10,
+      "reads": 35
+    },
+    {
+      "name": "Information Security Policy",
+      "author": "Library Documentation Team",
+      "category": "Policy",
+      "department": "ICT",
+      "publication_year": 2026,
+      "state": "review",
+      "description": "Waiting for QA review - open it to try the approval workflow.",
+      "is_ebook": true,
+      "pages": 6
+    },
+    {
+      "name": "Procurement Procedure",
+      "author": "Library Documentation Team",
+      "category": "Procedure",
+      "department": "Purchase",
+      "publication_year": 2026,
+      "state": "approved",
+      "description": "Fully approved - a manager can release it.",
+      "is_ebook": true,
+      "pages": 5
+    },
+    {
+      "name": "Fleet Safety Rules",
+      "author": "Library Documentation Team",
+      "category": "Procedure",
+      "department": "Drivers",
+      "publication_year": 2026,
+      "state": "draft",
+      "description": "Draft - submit it for review.",
+      "is_ebook": true,
+      "pages": 4
+    },
+    {
+      "name": "Old Leave Policy",
+      "author": "Library Documentation Team",
+      "category": "Policy",
+      "department": "HR",
+      "publication_year": 2019,
+      "state": "obsolete",
+      "description": "Superseded - kept for history.",
+      "is_ebook": true,
+      "pages": 4
+    }
+  ]
+}

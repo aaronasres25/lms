@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Mathematics",
+    "code": "MATH"
+  },
+  {
+    "name": "English",
+    "code": "ENG"
+  },
+  {
+    "name": "Science",
+    "code": "SCI"
+  },
+  {
+    "name": "Social Studies",
+    "code": "SOC"
+  },
+  {
+    "name": "Amharic",
+    "code": "AMH"
+  },
+  {
+    "name": "History",
+    "code": "HIS"
+  },
+  {
+    "name": "Geography",
+    "code": "GEO"
+  },
+  {
+    "name": "Physical Education",
+    "code": "PE"
+  },
+  {
+    "name": "ICT",
+    "code": "ICT"
+  }
+]

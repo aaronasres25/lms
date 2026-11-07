@@ -1,0 +1,11 @@
+{
+  "generate": {
+    "exams": [
+      "Quiz 1",
+      "Mid-term"
+    ],
+    "mean": 72,
+    "spread": 18,
+    "missing_rate": 0.02
+  }
+}

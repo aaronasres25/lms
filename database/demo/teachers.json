@@ -1,0 +1,47 @@
+[
+  {
+    "employee_no": "EMP1001",
+    "name": "Tigist Bekele",
+    "email": "tigist.teacher@demo.test",
+    "qualification": "BSc Mathematics",
+    "phone": "+251911000001",
+    "password": "password",
+    "joined_months_ago": 18
+  },
+  {
+    "employee_no": "EMP1002",
+    "name": "Daniel Worku",
+    "email": "daniel.teacher@demo.test",
+    "qualification": "BA English",
+    "phone": "+251911000002",
+    "password": "password",
+    "joined_months_ago": 24
+  },
+  {
+    "employee_no": "EMP1003",
+    "name": "Rahel Assefa",
+    "email": "rahel.teacher@demo.test",
+    "qualification": "MSc Biology",
+    "phone": "+251911000003",
+    "password": "password",
+    "joined_months_ago": 30
+  },
+  {
+    "employee_no": "EMP1004",
+    "name": "Samuel Negash",
+    "email": "samuel.teacher@demo.test",
+    "qualification": "BA Social Science",
+    "phone": "+251911000004",
+    "password": "password",
+    "joined_months_ago": 36
+  },
+  {
+    "employee_no": "EMP1005",
+    "name": "Kidist Lemma",
+    "email": "kidist.teacher@demo.test",
+    "qualification": "BA Amharic",
+    "phone": "+251911000005",
+    "password": "password",
+    "joined_months_ago": 42
+  }
+]

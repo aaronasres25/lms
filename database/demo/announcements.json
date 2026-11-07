@@ -1,0 +1,22 @@
+[
+  {
+    "title": "Welcome back to school",
+    "body": "We wish all students and teachers a productive new term. Timetables are available in your portal.",
+    "audience": "all"
+  },
+  {
+    "title": "Mid-term results published",
+    "body": "Mid-term results are now available under Results in the student portal.",
+    "audience": "students"
+  },
+  {
+    "title": "Marks submission deadline",
+    "body": "Teachers: please finish entering Final exam marks by Friday.",
+    "audience": "teachers"
+  },
+  {
+    "title": "Library: new e-books added",
+    "body": "Python Crash Course, Clean Code and more are now in the e-book catalog. Request physical copies from My library.",
+    "audience": "all"
+  }
+]

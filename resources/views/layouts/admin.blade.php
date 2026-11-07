@@ -34,16 +34,20 @@
         .btn-outline { border: 1px solid #ddd6fe; background: #fff; color: #5b21b6; } .btn-outline:hover { background: #f5f3ff; }
         #sidebar nav::-webkit-scrollbar { width: 6px; } #sidebar nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 3px; }
     </style>
+    @include('partials.sidebar-collapse')
 </head>
 <body class="bg-[#f4f1ff] text-slate-800">
 @php
     $u = auth()->user();
     // [label, route, active-pattern, icon, resource (null = always, '__admin' = admins only)]
+    // always visible, not inside a group
+    $standalone = [
+        ['Dashboard', 'admin.dashboard', 'admin.dashboard', 'home'],
+        ['Notifications', 'admin.notifications.index', 'admin.notifications.*', 'bell'],
+    ];
+    $groupIcons = ['Library' => 'book', 'Catalog data' => 'tag', 'School' => 'building', 'School setup' => 'clipboard',
+                   'Insights' => 'chart', 'Administration' => 'shield', 'Public' => 'globe'];
     $sections = [
-        'Overview' => [
-            ['Dashboard', 'admin.dashboard', 'admin.dashboard', 'home', null],
-            ['Notifications', 'admin.notifications.index', 'admin.notifications.*', 'bell', null],
-        ],
         'Library' => [
             ['Books', 'admin.books.index', 'admin.books.*', 'book', 'books'],
             ['Loans', 'admin.loans.index', 'admin.loans.*', 'loan', 'loans'],
@@ -100,53 +104,81 @@
     <div class="flex items-center justify-between px-5 py-5">
         <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3">
             <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-700 ring-1 ring-white/25">@include('partials.icon', ['name' => 'book', 'class' => 'h-6 w-6'])</span>
-            <span><span class="block text-base font-bold leading-tight">{{ config('lms.company_name') }}</span>
+            <span class="sb-label"><span class="block text-base font-bold leading-tight">{{ config('lms.company_name') }}</span>
                 <span class="block text-[10px] uppercase tracking-widest text-violet-300">Library System</span></span>
         </a>
         <button id="closeSide" class="rounded-lg p-1 hover:bg-white/10 lg:hidden" aria-label="Close menu">@include('partials.icon', ['name' => 'x'])</button>
     </div>
 
-    <nav class="flex-1 space-y-4 overflow-y-auto px-3 pb-4">
+    @php
+        // accordion: the group that holds the current page starts open; opening another group closes the previous one
+        $activeGroup = collect($sections)->search(fn ($items) => collect($items)->contains(fn ($i) => request()->routeIs($i[2]) && $visible($i[4])));
+        if ($activeGroup === false) $activeGroup = null;
+    @endphp
+    <nav class="flex-1 space-y-1 overflow-y-auto px-3 pb-4 pt-5">
+        {{-- standalone links (not part of any group) --}}
+        <div class="space-y-0.5 pb-2">
+            @foreach ($standalone as [$label, $route, $pattern, $icon])
+                @php $active = request()->routeIs($pattern); @endphp
+                <a href="{{ route($route) }}" title="{{ $label }}" class="group mb-0.5 flex items-center gap-3 rounded-xl px-3 py-3 text-[15px] font-medium transition {{ $active ? 'bg-white text-violet-800 shadow-lg' : 'text-violet-100 hover:bg-white/10 hover:text-white' }}">
+                    <span class="{{ $active ? 'text-violet-700' : 'text-violet-300 group-hover:text-white' }}">@include('partials.icon', ['name' => $icon, 'class' => 'h-[22px] w-[22px]'])</span><span class="sb-label">{{ $label }}</span>
+                </a>
+            @endforeach
+        </div>
+
         @foreach ($sections as $title => $items)
             @php $items = array_filter($items, fn ($i) => $visible($i[4])); @endphp
             @continue(empty($items))
-            <div>
-                <div class="mb-1 flex items-center gap-2 px-3">
-                    <span class="text-[10px] font-bold uppercase tracking-[.18em] text-violet-300">{{ $title }}</span>
-                    <span class="h-px flex-1 bg-white/15"></span>
-                </div>
-                @foreach ($items as [$label, $route, $pattern, $icon])
-                    @php $active = request()->routeIs($pattern); @endphp
-                    <a href="{{ route($route) }}" class="group mb-0.5 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {{ $active ? 'bg-white text-violet-800 shadow-lg' : 'text-violet-100 hover:bg-white/10 hover:text-white' }}">
-                        <span class="{{ $active ? 'text-violet-700' : 'text-violet-300 group-hover:text-white' }}">@include('partials.icon', ['name' => $icon])</span>
-                        {{ $label }}
-                        @if ($label === 'Approvals' && $approvalCount)<span class="ml-auto rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-amber-950">{{ $approvalCount }}</span>@endif
-                    </a>
-                @endforeach
+            <div class="sb-group {{ $title === $activeGroup ? 'is-open' : '' }}">
+                <button type="button" class="sb-toggle flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-white/5" aria-label="{{ $title }}">
+                    <span class="sb-label text-violet-300">@include('partials.icon', ['name' => $groupIcons[$title] ?? 'tag', 'class' => 'h-[22px] w-[22px]'])</span>
+                    <span class="sb-label flex-1 text-[13px] font-bold uppercase tracking-wider text-violet-100">{{ $title }}</span>
+                    @if ($title === 'Library' && $approvalCount)<span class="sb-label sb-hdr-badge rounded-full bg-amber-400 px-2 text-[11px] font-bold text-amber-950">{{ $approvalCount }}</span>@endif
+                    <span class="sb-label sb-chev text-violet-300">@include('partials.icon', ['name' => 'chevron', 'class' => 'h-4 w-4'])</span>
+                </button>
+                <div class="sb-group-body"><div class="sb-nest">
+                    @foreach ($items as [$label, $route, $pattern, $icon])
+                        @php $active = request()->routeIs($pattern); @endphp
+                        <a href="{{ route($route) }}" title="{{ $label }}" class="group mb-0.5 flex items-center gap-3 rounded-xl px-3 py-3 text-[15px] font-medium transition {{ $active ? 'bg-white text-violet-800 shadow-lg' : 'text-violet-100 hover:bg-white/10 hover:text-white' }}">
+                    <span class="{{ $active ? 'text-violet-700' : 'text-violet-300 group-hover:text-white' }}">@include('partials.icon', ['name' => $icon, 'class' => 'h-[22px] w-[22px]'])</span><span class="sb-label">{{ $label }}</span>
+                            @if ($label === 'Approvals' && $approvalCount)<span class="sb-label ml-auto rounded-full bg-amber-400 px-2 py-0.5 text-[11px] font-bold text-amber-950">{{ $approvalCount }}</span>@endif
+                        </a>
+                    @endforeach
+                </div></div>
             </div>
         @endforeach
-        <div>
-            <div class="mb-1 flex items-center gap-2 px-3"><span class="text-[10px] font-bold uppercase tracking-[.18em] text-violet-300">Public</span><span class="h-px flex-1 bg-white/15"></span></div>
-            <a href="{{ route('catalog') }}" class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-violet-100 hover:bg-white/10 hover:text-white">
-                <span class="text-violet-300 group-hover:text-white">@include('partials.icon', ['name' => 'globe'])</span> E-book catalog</a>
+
+        @php $title = 'Public'; @endphp
+        <div class="sb-group">
+            <button type="button" class="sb-toggle flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-white/5" aria-label="{{ $title }}">
+                    <span class="sb-label text-violet-300">@include('partials.icon', ['name' => $groupIcons[$title] ?? 'tag', 'class' => 'h-[22px] w-[22px]'])</span>
+                    <span class="sb-label flex-1 text-[13px] font-bold uppercase tracking-wider text-violet-100">{{ $title }}</span>
+
+                    <span class="sb-label sb-chev text-violet-300">@include('partials.icon', ['name' => 'chevron', 'class' => 'h-4 w-4'])</span>
+                </button>
+            <div class="sb-group-body"><div class="sb-nest">
+                <a href="{{ route('catalog') }}" title="E-book catalog" class="group flex items-center gap-3 rounded-xl px-3 py-3 text-[15px] font-medium text-violet-100 transition hover:bg-white/10 hover:text-white">
+                    <span class="text-violet-300 group-hover:text-white">@include('partials.icon', ['name' => 'globe', 'class' => 'h-[22px] w-[22px]'])</span><span class="sb-label">E-book catalog</span></a>
+            </div></div>
         </div>
     </nav>
 
     <div class="border-t border-white/10 bg-black/15 p-4">
         <div class="mb-3 flex items-center gap-3">
             <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-rose-500 text-base font-bold">{{ strtoupper(mb_substr($u->name, 0, 1)) }}</span>
-            <div class="min-w-0"><div class="truncate text-sm font-semibold">{{ $u->name }}</div><div class="text-[11px] uppercase tracking-wider text-violet-300">{{ $u->role }}</div></div>
+            <div class="sb-label min-w-0"><div class="truncate text-sm font-semibold">{{ $u->name }}</div><div class="text-[11px] uppercase tracking-wider text-violet-300">{{ $u->role }}</div></div>
         </div>
         <form method="POST" action="{{ route('logout') }}">@csrf
-            <button class="flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-sm font-semibold transition hover:bg-rose-500">@include('partials.icon', ['name' => 'logout']) Logout</button>
+            <button class="flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-sm font-semibold transition hover:bg-rose-500">@include('partials.icon', ['name' => 'logout']) <span class="sb-label">Logout</span></button>
         </form>
     </div>
 </aside>
 
-<div class="lg:pl-64">
+<div id="mainWrap" class="lg:pl-64">
     {{-- top bar: search · notifications · user --}}
     <header class="sticky top-0 z-20 flex items-center gap-3 bg-[#f4f1ff]/85 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
         <button id="openSide" class="rounded-xl bg-white p-2 text-violet-700 shadow-sm lg:hidden" aria-label="Open menu">@include('partials.icon', ['name' => 'menu', 'class' => 'h-6 w-6'])</button>
+        <button id="collapseBtn" type="button" class="hidden rounded-xl bg-white p-2 text-violet-700 shadow-sm lg:inline-flex" title="Collapse / expand the menu" aria-label="Toggle sidebar">@include('partials.icon', ['name' => 'menu', 'class' => 'h-6 w-6'])</button>
 
         @if ($u->canDo('books', 'read'))
             <form action="{{ route('admin.books.index') }}" class="relative max-w-xl flex-1">
@@ -199,7 +231,7 @@
             <div class="absolute right-0 mt-2 w-52 overflow-hidden rounded-2xl bg-white py-1 shadow-2xl ring-1 ring-violet-100">
                 <div class="border-b border-violet-50 px-4 py-2"><div class="truncate text-sm font-semibold">{{ $u->name }}</div><div class="truncate text-xs text-slate-500">{{ $u->email }}</div></div>
                 <a href="{{ route('password.change') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-violet-50">@include('partials.icon', ['name' => 'key', 'class' => 'h-4 w-4']) Change password</a>
-                <a href="{{ route('catalog') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-violet-50">@include('partials.icon', ['name' => 'globe', 'class' => 'h-4 w-4']) E-book catalog</a>
+                <a href="{{ route('catalog') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-violet-50">@include('partials.icon', ['name' => 'globe', 'class' => 'h-4 w-4'])<span class="sb-label">E-book catalog</span></a>
                 <form method="POST" action="{{ route('logout') }}">@csrf<button class="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-rose-600 hover:bg-rose-50">@include('partials.icon', ['name' => 'logout', 'class' => 'h-4 w-4']) Logout</button></form>
             </div>
         </details>

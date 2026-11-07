@@ -1,0 +1,8 @@
+{
+  "generate": {
+    "days": 20,
+    "absent_rate": 0.06,
+    "late_rate": 0.05,
+    "excused_rate": 0.02
+  }
+}

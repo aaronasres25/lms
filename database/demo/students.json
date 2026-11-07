@@ -1,0 +1,65 @@
+{
+  "students": [
+    {
+      "admission_no": "DEMO-001",
+      "name": "Abel Tadesse",
+      "gender": "male",
+      "date_of_birth": "2015-03-14",
+      "section": "Grade 5-A",
+      "guardian_name": "Tadesse Mulugeta",
+      "guardian_phone": "+251911000001",
+      "login": "abel.student@demo.test",
+      "password": "password"
+    },
+    {
+      "admission_no": "DEMO-002",
+      "name": "Selam Bekele",
+      "gender": "female",
+      "date_of_birth": "2015-07-02",
+      "section": "Grade 5-A",
+      "guardian_name": "Bekele Assefa",
+      "guardian_phone": "+251911000002",
+      "login": "selam.student@demo.test",
+      "password": "password"
+    },
+    {
+      "admission_no": "DEMO-003",
+      "name": "Liya Desta",
+      "gender": "female",
+      "date_of_birth": "2014-11-20",
+      "section": "Grade 5-B",
+      "guardian_name": "Desta Worku",
+      "guardian_phone": "+251911000003",
+      "login": "liya.student@demo.test",
+      "password": "password"
+    },
+    {
+      "admission_no": "DEMO-004",
+      "name": "Henok Girma",
+      "gender": "male",
+      "date_of_birth": "2014-01-09",
+      "section": "Grade 6-A",
+      "guardian_name": "Girma Haile",
+      "guardian_phone": "+251911000004",
+      "login": "henok.student@demo.test",
+      "password": "password"
+    }
+  ],
+  "generate": [
+    {
+      "section": "Grade 5-A",
+      "count": 18,
+      "prefix": "DEM"
+    },
+    {
+      "section": "Grade 5-B",
+      "count": 18,
+      "prefix": "DEM"
+    },
+    {
+      "section": "Grade 6-A",
+      "count": 18,
+      "prefix": "DEM"
+    }
+  ]
+}

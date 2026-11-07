@@ -1,0 +1,37 @@
+[
+  {
+    "department": "HR",
+    "steps": [
+      {
+        "title": "QA review",
+        "role": "qa"
+      },
+      {
+        "title": "Manager approval",
+        "role": "manager"
+      }
+    ]
+  },
+  {
+    "department": "ICT",
+    "steps": [
+      {
+        "title": "QA review",
+        "role": "qa"
+      },
+      {
+        "title": "ICT head sign-off",
+        "user": "meron.manager@demo.test"
+      }
+    ]
+  },
+  {
+    "department": null,
+    "steps": [
+      {
+        "title": "QA review",
+        "role": "qa"
+      }
+    ]
+  }
+]

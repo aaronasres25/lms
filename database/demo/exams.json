@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Quiz 1",
+    "term": "Term 1",
+    "max_marks": 20,
+    "published": true,
+    "started_days_ago": 45,
+    "ended_days_ago": 44
+  },
+  {
+    "name": "Mid-term",
+    "term": "Term 1",
+    "max_marks": 100,
+    "published": true,
+    "started_days_ago": 25,
+    "ended_days_ago": 18
+  },
+  {
+    "name": "Final",
+    "term": "Term 1",
+    "max_marks": 100,
+    "published": false,
+    "started_days_ago": 2,
+    "ended_days_ago": 0
+  }
+]

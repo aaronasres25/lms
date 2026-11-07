@@ -1,0 +1,83 @@
+{
+  "members": [
+    {
+      "name": "Abebe Girma",
+      "email": "abebe.reader@demo.test",
+      "max_books": 5
+    },
+    {
+      "name": "Selam Haile",
+      "email": "selam.reader@demo.test",
+      "max_books": 5
+    },
+    {
+      "name": "Yonas Kebede",
+      "email": "yonas.reader@demo.test",
+      "max_books": 3
+    },
+    {
+      "name": "Hana Bekele",
+      "email": "hana.clerk@demo.test",
+      "max_books": 5
+    }
+  ],
+  "loans": [
+    {
+      "book": "Things Fall Apart",
+      "member": "Abebe Girma",
+      "state": "returned",
+      "loaned_days_ago": 30,
+      "expected_days": 14,
+      "returned_days_ago": 18
+    },
+    {
+      "book": "The Selfish Gene",
+      "member": "Abebe Girma",
+      "state": "issued",
+      "loaned_days_ago": 9,
+      "expected_days": 14
+    },
+    {
+      "book": "Calculus: Early Transcendentals",
+      "member": "Selam Haile",
+      "state": "issued",
+      "loaned_days_ago": 25,
+      "expected_days": 14
+    },
+    {
+      "book": "Oliver Twist",
+      "member": "Selam Haile",
+      "state": "returned",
+      "loaned_days_ago": 40,
+      "expected_days": 14,
+      "returned_days_ago": 20
+    },
+    {
+      "book": "Clean Code",
+      "member": "Yonas Kebede",
+      "state": "issued",
+      "loaned_days_ago": 20,
+      "expected_days": 14
+    },
+    {
+      "book": "Python Crash Course",
+      "member": "Hana Bekele",
+      "state": "lost",
+      "loaned_days_ago": 35,
+      "expected_days": 14
+    },
+    {
+      "book": "Things Fall Apart",
+      "member": "Yonas Kebede",
+      "state": "issued",
+      "loaned_days_ago": 3,
+      "expected_days": 14
+    },
+    {
+      "book": "Fikir Eske Mekabir",
+      "member": "Hana Bekele",
+      "state": "draft",
+      "loaned_days_ago": 0
+    }
+  ]
+}

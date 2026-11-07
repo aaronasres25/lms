@@ -1,0 +1,47 @@
+[
+  {
+    "grade": "Grade 5",
+    "name": "A",
+    "class_teacher": "EMP1001",
+    "room": "Room 5A",
+    "capacity": 40,
+    "subjects": {
+      "Mathematics": "EMP1001",
+      "English": "EMP1002",
+      "Science": "EMP1003",
+      "Social Studies": "EMP1004",
+      "Amharic": "EMP1005",
+      "ICT": "EMP1002"
+    }
+  },
+  {
+    "grade": "Grade 5",
+    "name": "B",
+    "class_teacher": "EMP1002",
+    "room": "Room 5B",
+    "capacity": 40,
+    "subjects": {
+      "Mathematics": "EMP1003",
+      "English": "EMP1002",
+      "Science": "EMP1001",
+      "Social Studies": "EMP1005",
+      "Amharic": "EMP1004",
+      "ICT": "EMP1002"
+    }
+  },
+  {
+    "grade": "Grade 6",
+    "name": "A",
+    "class_teacher": "EMP1003",
+    "room": "Room 6A",
+    "capacity": 38,
+    "subjects": {
+      "Mathematics": "EMP1001",
+      "English": "EMP1004",
+      "Science": "EMP1003",
+      "Social Studies": "EMP1004",
+      "Amharic": "EMP1005",
+      "ICT": "EMP1002"
+    }
+  }
+]
