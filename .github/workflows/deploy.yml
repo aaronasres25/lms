@@ -1,0 +1,57 @@
+
+name: Fana Academy LMS CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fana-lms-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to cPanel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Laravel application
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_SSH_KEY }}
+          port: ${{ secrets.CPANEL_PORT }}
+          script: |
+            set -e
+
+            cd /home/fanaacjf/repositories/lms
+
+            echo "Fetching latest code..."
+            git fetch origin main
+
+            echo "Updating application..."
+            git pull --ff-only origin main
+
+            echo "Installing production dependencies..."
+            composer install \
+              --no-dev \
+              --prefer-dist \
+              --no-interaction \
+              --optimize-autoloader
+
+            echo "Clearing Laravel caches..."
+            php artisan optimize:clear
+
+            echo "Rebuilding configuration cache..."
+            php artisan config:cache
+
+            echo "Rebuilding view cache..."
+            php artisan view:cache
+
+            echo "Deployment completed successfully!"
